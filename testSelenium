@@ -1,0 +1,91 @@
+import requests
+from bs4 import BeautifulSoup
+from selenium import webdriver
+import time
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+import xlsxwriter
+data = {
+    "username": "test1",
+    "password": "test1"
+}
+
+def get_source_html(url):
+    driver = webdriver.Chrome(
+        executable_path=r"C:\Users\fonn1x\PycharmProjects\litepmsParser/chromedriver.exe"
+    )
+
+    try:
+        driver.get(url=url)
+        time.sleep(1)
+
+        driver.find_element_by_name("username").send_keys(data["username"])
+        driver.find_element_by_name("password").send_keys(data["password"])
+        driver.find_element_by_xpath('//*[@id="login"]/form/div[2]/div[1]/input').click()
+        #booking_urls = "https://litepms.ru/booking/list?search_type=checkin&search_from_date=04-01-2023&search_to_date=12-02-2023&miltiple_search=&search_payed=0&search_service=0&miltiple_search=&search_foreigner=0&search_group_id=0&search_filter="
+        booking_urls = "https://litepms.ru/booking/list?search_type=checkin&search_from_date=06-01-2021&search_to_date=12-02-2023&miltiple_search=&search_payed=0&search_service=0&miltiple_search=&search_foreigner=0&search_group_id=0&search_filter="
+
+        driver.get(url=booking_urls)
+
+        for links in driver.find_elements_by_xpath("//a[@title='Редактировать']"):
+
+            with open("test.txt", "a+", encoding='utf-8') as file:
+                #print(links.get_attribute("href"))
+                l = links.get_attribute("href")
+
+                file.write(l + '\n')
+                file.close()
+        f = open('test.txt')
+        line_count = sum(1 for line in open('test.txt'))
+        for line in f:
+            driver.get(url=line)
+
+            #print(driver.find_element_by_xpath('//*[@id="tab_booking"]/div/div[2]/div[2]/div[1]/table/tbody/tr[2]/td[2]'))
+            for price3 in  driver.find_elements_by_xpath('//*[@id="tab_booking"]/div/div[2]/div[2]/div[1]/table/tbody/tr[5]/td[2]'):
+                with open("price_za_uslugi.txt", "a+", encoding='utf-8') as file:
+                    # print(links.get_attribute("href"))
+
+
+                    file.write(price3.text + '\n')
+                    file.close()
+
+                #worksheet.write(f'A{)}', price3.text)
+            for price1 in driver.find_elements_by_xpath(
+                    '//*[@id="tab_booking"]/div/div[2]/div[2]/div[1]/table/tbody/tr[2]/td[2]'):
+                with open("price_za_domiki.txt", "a+", encoding='utf-8') as file:
+                    # print(links.get_attribute("href"))
+
+                    file.write(price1.text + '\n')
+                    file.close()
+
+                #print(price3.text)
+
+
+
+
+
+        #// *[ @ id = "booking"] / tbody / tr[1] / td[1] / a
+        #// *[ @ id = "booking"] / tbody / tr[2] / td[1] / a
+        time.sleep(5)
+    except Exception as _ex:
+        print(_ex)
+
+def txt_to_Excel():
+    workbook = xlsxwriter.Workbook('test.xlsx')
+    worksheet = workbook.add_worksheet()
+    i = 1
+    j = 1
+    worksheet.write('A1', "За домики")
+    worksheet.write('B1', "За услуги")
+    for line in open("price_za_domiki.txt"):
+        worksheet.write(f'A{i + 1}', line)
+        i += 1
+    for line in open("price_za_uslugi.txt"):
+        worksheet.write(f'B{j + 1}', line)
+        j += 1
+    workbook.close()
+def main():
+    get_source_html(url="https://litepms.ru/login")
+    txt_to_Excel()
+if __name__ == "__main__":
+    main()
